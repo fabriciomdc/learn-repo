@@ -6,7 +6,7 @@ cat > README.md << 'EOF'
 </p>
 
 <p align="center">
-  <img src="./public/rabisco.png" alt="marca pessoal" width="150" />
+  <img src="./public/favicon.png" alt="marca pessoal" width="150" />
 </p>
 
 <hr>
