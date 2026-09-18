@@ -1,8 +1,7 @@
-cat > README.md << 'EOF'
 <h1 align="center">learn-repo</h1>
 
 <p align="center">
-  <i>Aquele Onde Estudar Pode Ser Divertido</i>
+  <i>Aquele Onde Estudar Pode Ser Divertido :) </i>
 </p>
 
 <p align="center">
