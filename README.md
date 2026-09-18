@@ -1,9 +1,15 @@
 cat > README.md << 'EOF'
-# learn-repo
+<h1 align="center">learn-repo</h1>
 
-*Aquele Onde Estudar Pode Ser Divertido*
+<p align="center">
+  <i>Aquele Onde Estudar Pode Ser Divertido</i>
+</p>
 
-![marca pessoal](./public/favicon.png)
+<p align="center">
+  <img src="./public/rabisco.png" alt="marca pessoal" width="150" />
+</p>
+
+<hr>
 
 ## O que é isso
 
