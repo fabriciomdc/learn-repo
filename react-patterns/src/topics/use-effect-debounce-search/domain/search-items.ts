@@ -1,0 +1,1 @@
+export type SearchItems = (query: string, signal: AbortSignal) => Promise<string[]>
