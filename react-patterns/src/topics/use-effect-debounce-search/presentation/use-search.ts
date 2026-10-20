@@ -9,12 +9,17 @@ export function useSearch(searchItems: SearchItems) {
   const [results, setResults] = useState<string[]>([])
   const [status, setStatus] = useState<Status>('idle')
 
-  useEffect(() => {
-    if (query.trim() === '') {
+  function changeQuery(value: string) {
+    setQuery(value)
+
+    if (value.trim() === '') {
       setStatus('idle')
       setResults([])
-      return
     }
+  }
+
+  useEffect(() => {
+    if (query.trim() === '') return
 
     const controller = new AbortController()
     const debounceTimer = setTimeout(() => {
@@ -38,5 +43,5 @@ export function useSearch(searchItems: SearchItems) {
     }
   }, [query, searchItems])
 
-  return { query, setQuery, results, status }
+  return { query, setQuery: changeQuery, results, status }
 }
