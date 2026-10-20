@@ -1,0 +1,87 @@
+.mission-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+.mission-panel {
+  width: min(820px, 92vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 18px 24px;
+  background: #1e1e2e;
+  border: 4px solid #f5d76e;
+  color: #eee;
+  text-align: left;
+}
+
+.mission-panel h1 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  color: #f5d76e;
+}
+
+.mission-description {
+  color: #aaa;
+}
+
+.mission-badge {
+  color: #7fd67f;
+}
+
+.mission-panel pre {
+  padding: 10px;
+  background: #11111b;
+  border: 2px solid #444;
+  font-size: 13px;
+  overflow-x: auto;
+}
+
+.mission-panel ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mission-panel button {
+  width: 100%;
+  margin: 4px 0;
+  padding: 8px 10px;
+  background: transparent;
+  color: inherit;
+  border: 2px solid #666;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mission-panel button.selected {
+  border-color: #f5d76e;
+  background: rgba(245, 215, 110, 0.13);
+}
+
+.mission-panel button:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.feedback.correct {
+  color: #7fd67f;
+}
+
+.feedback.wrong {
+  color: #ff8a80;
+}
+
+.mission-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.mission-actions button {
+  text-align: center;
+}
