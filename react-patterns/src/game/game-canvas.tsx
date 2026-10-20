@@ -7,7 +7,7 @@ type GameCanvasProps = {
 };
 
 export function GameCanvas({ paused, onNpcInteract }: GameCanvasProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(paused);
   const onNpcInteractRef = useRef(onNpcInteract);
 
@@ -17,13 +17,20 @@ export function GameCanvas({ paused, onNpcInteract }: GameCanvasProps) {
   });
 
   useEffect(() => {
-    if (!canvasRef.current) return;
-    return createGame({
-      canvas: canvasRef.current,
+    const container = containerRef.current;
+    if (!container) return;
+    const canvas = document.createElement("canvas");
+    container.appendChild(canvas);
+    const destroyGame = createGame({
+      canvas,
       isPaused: () => pausedRef.current,
       onNpcInteract: () => onNpcInteractRef.current(),
     });
+    return () => {
+      destroyGame();
+      canvas.remove();
+    };
   }, []);
 
-  return <canvas ref={canvasRef} />;
+  return <div ref={containerRef} />;
 }
