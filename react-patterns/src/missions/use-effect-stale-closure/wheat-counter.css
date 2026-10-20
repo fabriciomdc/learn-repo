@@ -1,0 +1,11 @@
+.wheat-counter {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  padding: 8px 14px;
+  background: #1e1e2e;
+  border: 3px solid #f5d76e;
+  color: #eee;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 20px;
+}

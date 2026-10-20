@@ -1,0 +1,34 @@
+.dialogue-box {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  width: min(720px, 92vw);
+  box-sizing: border-box;
+  padding: 16px 22px;
+  background: #1e1e2e;
+  border: 4px solid #f5d76e;
+  color: #eee;
+  font-family: ui-monospace, Consolas, monospace;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dialogue-speaker {
+  display: block;
+  color: #f5d76e;
+  margin-bottom: 8px;
+}
+
+.dialogue-line {
+  margin: 0 0 12px;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+.dialogue-hint {
+  display: block;
+  text-align: right;
+  font-size: 14px;
+  color: #aaa;
+}

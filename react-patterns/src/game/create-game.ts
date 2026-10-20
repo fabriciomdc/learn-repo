@@ -1,25 +1,55 @@
 import kaplay from "kaplay";
+import {
+  buildFarmMap,
+  HOUSE_DOOR_STOP,
+  loadFarmMapSprites,
+  WHEAT_POSITIONS,
+} from "./build-farm-map";
+import {
+  ASSETS_PATH,
+  GAME_HEIGHT,
+  GAME_WIDTH,
+  SPRITE_SCALE,
+} from "./world-constants";
 
 const PLAYER_SPEED = 200;
 const INTERACTION_DISTANCE = 56;
-const TILE_SIZE = 16;
-const SPRITE_SCALE = 3;
-const GAME_WIDTH = 800;
-const GAME_HEIGHT = 480;
-const PLAIN_GRASS_FRAME = 12;
-const DECORATED_GRASS_FRAMES = [55, 56, 57, 66, 67, 68];
-const ASSETS_PATH = "/assets/sprout-lands";
+const CHARACTER_SCALE = 2;
+const HARVEST_DISTANCE = 60;
+const RIPE_WHEAT_FRAME = 4;
+const HARVESTED_WHEAT_FRAME = 1;
+const CHARACTERS_PATH = "/assets/tiny-questers";
+const HARVESTS_TO_NOTICE_PROBLEM = 2;
+const GROWTH_FRAMES = [1, 2, 3, 4];
+const GROWTH_STEP_SECONDS = 0.7;
+const GROWTH_STAGGER_SECONDS = 0.3;
+const FARMER_SPEED = 90;
+const BUBBLE_OFFSET_Y = -58;
+const BUBBLE_BOB_HEIGHT = 3;
+const BUBBLE_BOB_SPEED = 4;
+
+export type NpcInteraction = "mission" | "delivery";
 
 type CreateGameParams = {
   canvas: HTMLCanvasElement;
   isPaused: () => boolean;
-  onNpcInteract: () => void;
+  hasHoe: () => boolean;
+  isProblemSolved: () => boolean;
+  hasDelivered: () => boolean;
+  wheatGoal: number;
+  onNpcInteract: (interaction: NpcInteraction) => void;
+  onHarvest: () => void;
 };
 
 export function createGame({
   canvas,
   isPaused,
+  hasHoe,
+  isProblemSolved,
+  hasDelivered,
+  wheatGoal,
   onNpcInteract,
+  onHarvest,
 }: CreateGameParams) {
   const k = kaplay({
     canvas,
@@ -27,11 +57,15 @@ export function createGame({
     height: GAME_HEIGHT,
     background: [90, 160, 90],
     crisp: true,
+    stretch: true,
+    letterbox: true,
     global: false,
   });
 
-  k.loadSprite("grass", `${ASSETS_PATH}/grass.png`, { sliceX: 11, sliceY: 7 });
-  k.loadSprite("character", `${ASSETS_PATH}/character.png`, {
+  loadFarmMapSprites(k);
+  k.loadSprite("plants", `${ASSETS_PATH}/plants.png`, { sliceX: 6, sliceY: 2 });
+  k.loadSprite("farmer", `${CHARACTERS_PATH}/farmer.png`);
+  const warriorSprite = {
     sliceX: 4,
     sliceY: 4,
     anims: {
@@ -40,7 +74,13 @@ export function createGame({
       "walk-left": { from: 8, to: 11, loop: true, speed: 6 },
       "walk-right": { from: 12, to: 15, loop: true, speed: 6 },
     },
-  });
+  };
+  k.loadSprite("warrior", `${CHARACTERS_PATH}/warrior.png`, warriorSprite);
+  k.loadSprite(
+    "warrior-farmer",
+    `${CHARACTERS_PATH}/warrior-farmer.png`,
+    warriorSprite,
+  );
 
   const directions = {
     down: { vector: k.vec2(0, 1), idleFrame: 0 },
@@ -52,45 +92,99 @@ export function createGame({
   const directionKeys = Object.keys(directions) as Direction[];
 
   k.onLoad(() => {
-    const tileDisplaySize = TILE_SIZE * SPRITE_SCALE;
-    const columns = Math.ceil(GAME_WIDTH / tileDisplaySize);
-    const rows = Math.ceil(GAME_HEIGHT / tileDisplaySize);
+    buildFarmMap(k);
 
-    for (let row = 0; row < rows; row++) {
-      for (let column = 0; column < columns; column++) {
-        const decorationIndex = (column * 3 + row * 5) % 12;
-        const frame =
-          decorationIndex < DECORATED_GRASS_FRAMES.length
-            ? DECORATED_GRASS_FRAMES[decorationIndex]
-            : PLAIN_GRASS_FRAME;
-
-        k.add([
-          k.sprite("grass", { frame }),
-          k.pos(column * tileDisplaySize, row * tileDisplaySize),
-          k.scale(SPRITE_SCALE),
-          k.z(-1),
-        ]);
-      }
-    }
+    const wheatPatches = WHEAT_POSITIONS.map(([x, y]) => ({
+      sprite: k.add([
+        k.sprite("plants", { frame: RIPE_WHEAT_FRAME }),
+        k.pos(x, y),
+        k.scale(SPRITE_SCALE),
+        k.anchor("center"),
+      ]),
+      ripe: true,
+    }));
 
     const player = k.add([
-      k.sprite("character"),
-      k.pos(120, 360),
-      k.scale(SPRITE_SCALE),
-      k.area({ shape: new k.Rect(k.vec2(-6, -4), 12, 14) }),
+      k.sprite("warrior"),
+      k.pos(120, 420),
+      k.scale(CHARACTER_SCALE),
+      k.area({ shape: new k.Rect(k.vec2(-6, 2), 12, 12) }),
+      k.body(),
       k.anchor("center"),
     ]);
 
     const npc = k.add([
-      k.sprite("character", { frame: directions.down.idleFrame }),
-      k.color(255, 190, 130),
-      k.pos(600, 200),
-      k.scale(SPRITE_SCALE),
-      k.area({ shape: new k.Rect(k.vec2(-6, -4), 12, 14) }),
+      k.sprite("farmer"),
+      k.pos(205, 300),
+      k.scale(CHARACTER_SCALE),
+      k.area({ shape: new k.Rect(k.vec2(-6, 2), 12, 12) }),
+      k.body({ isStatic: true }),
       k.anchor("center"),
     ]);
 
+    const alertBubble = k.add([
+      k.rect(28, 24, { radius: 6 }),
+      k.color(255, 255, 255),
+      k.outline(3, k.rgb(30, 30, 46)),
+      k.pos(npc.pos.x, npc.pos.y + BUBBLE_OFFSET_Y),
+      k.anchor("center"),
+      k.z(10),
+    ]);
+    alertBubble.add([
+      k.text("!", { size: 20 }),
+      k.color(200, 40, 40),
+      k.anchor("center"),
+    ]);
+    alertBubble.hidden = true;
+    let harvestedBeforeFix = 0;
+    let harvestedAfterFix = 0;
+    let farmerLeaving = false;
+    let deliveryStarted = false;
+    let farmerGone = false;
+    const farmerWaypoints = [[HOUSE_DOOR_STOP[0], npc.pos.y], HOUSE_DOOR_STOP];
+
     let facing: Direction = "down";
+    let hoeEquipped = false;
+    let wasProblemSolved = isProblemSolved();
+
+    function regrowWheat() {
+      wheatPatches.forEach((patch, patchIndex) => {
+        patch.ripe = false;
+        GROWTH_FRAMES.forEach((frame, step) => {
+          const delay =
+            patchIndex * GROWTH_STAGGER_SECONDS + step * GROWTH_STEP_SECONDS;
+          k.wait(delay, () => {
+            patch.sprite.frame = frame;
+            if (step === GROWTH_FRAMES.length - 1) patch.ripe = true;
+          });
+        });
+      });
+    }
+
+    function updateFarmer(problemSolved: boolean) {
+      if (farmerGone) return;
+      if (hasDelivered()) farmerLeaving = true;
+      const noticedProblem =
+        !problemSolved && harvestedBeforeFix >= HARVESTS_TO_NOTICE_PROBLEM;
+      const readyToDeliver =
+        problemSolved && harvestedAfterFix >= wheatGoal && !farmerLeaving;
+      alertBubble.hidden = farmerLeaving || !(noticedProblem || readyToDeliver);
+      alertBubble.pos.y =
+        npc.pos.y +
+        BUBBLE_OFFSET_Y +
+        Math.sin(k.time() * BUBBLE_BOB_SPEED) * BUBBLE_BOB_HEIGHT;
+      if (!farmerLeaving) return;
+      const [targetX, targetY] = farmerWaypoints[0] ?? [];
+      if (targetX === undefined) {
+        npc.destroy();
+        alertBubble.destroy();
+        farmerGone = true;
+        return;
+      }
+      const target = k.vec2(targetX, targetY);
+      if (npc.pos.dist(target) < 2) farmerWaypoints.shift();
+      else npc.moveTo(target, FARMER_SPEED);
+    }
 
     for (const key of directionKeys) {
       k.onKeyDown(key, () => {
@@ -102,6 +196,18 @@ export function createGame({
     }
 
     k.onUpdate(() => {
+      const problemSolved = isProblemSolved();
+      if (problemSolved && !wasProblemSolved) {
+        harvestedAfterFix = 0;
+        regrowWheat();
+      }
+      wasProblemSolved = problemSolved;
+      updateFarmer(problemSolved);
+      if (hasHoe() && !hoeEquipped) {
+        hoeEquipped = true;
+        player.use(k.sprite("warrior-farmer"));
+        player.frame = directions[facing].idleFrame;
+      }
       const isWalking = directionKeys.some((key) => k.isKeyDown(key));
       if (isWalking && !isPaused()) return;
       if (!player.curAnim()) return;
@@ -111,7 +217,24 @@ export function createGame({
 
     k.onKeyPress("e", () => {
       if (isPaused()) return;
-      if (player.pos.dist(npc.pos) <= INTERACTION_DISTANCE) onNpcInteract();
+      const canTalkToFarmer = !farmerGone && !farmerLeaving && !deliveryStarted;
+      if (canTalkToFarmer && player.pos.dist(npc.pos) <= INTERACTION_DISTANCE) {
+        const readyToDeliver =
+          isProblemSolved() && harvestedAfterFix >= wheatGoal;
+        deliveryStarted = readyToDeliver;
+        onNpcInteract(readyToDeliver ? "delivery" : "mission");
+        return;
+      }
+      const patch = wheatPatches.find(
+        ({ sprite, ripe }) =>
+          ripe && player.pos.dist(sprite.pos) <= HARVEST_DISTANCE,
+      );
+      if (!patch) return;
+      patch.ripe = false;
+      patch.sprite.frame = HARVESTED_WHEAT_FRAME;
+      if (isProblemSolved()) harvestedAfterFix += 1;
+      else harvestedBeforeFix += 1;
+      onHarvest();
     });
   });
 

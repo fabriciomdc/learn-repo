@@ -19,4 +19,10 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    files: ['src/missions/**/*.{ts,tsx}'],
+    rules: {
+      'react-hooks/exhaustive-deps': 'off',
+    },
+  },
 ])
