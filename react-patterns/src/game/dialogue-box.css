@@ -1,9 +1,9 @@
 .dialogue-box {
-  position: fixed;
+  position: absolute;
   left: 50%;
-  bottom: 24px;
+  bottom: 12px;
   transform: translateX(-50%);
-  width: min(720px, 92vw);
+  width: min(720px, 94%);
   box-sizing: border-box;
   padding: 16px 22px;
   background: #1e1e2e;
