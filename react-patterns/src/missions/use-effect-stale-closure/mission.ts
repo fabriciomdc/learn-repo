@@ -3,7 +3,15 @@ import type { Mission } from "../mission";
 export const staleClosureMission: Mission = {
   id: "use-effect-stale-closure",
   title: "The One With the Stale Closure",
-  description: "Este contador deveria somar a cada segundo, mas trava no 1.",
+  topic: "useEffect e stale closure",
+  description:
+    "O placar agora se mexe, mas trava no 1 por mais trigo que se colha.",
+  lessonLines: [
+    "Agora o placar mexe, mas trava no 1! Antes de arrumar, deixa eu te explicar o useEffect e a tal da closure.",
+    "O useEffect roda DEPOIS que a tela é desenhada. Ele serve para ligar o React a algo de fora, como o aviso de que um trigo foi colhido.",
+    "Esse [] no final quer dizer: liga uma vez só, quando a horta aparecer na tela.",
+    "O problema é que a função que fica lá dentro lembra dos valores do momento em que nasceu, como um bilhete com o recado velho. Isso é uma closure. Vê se descobre o que está errado!",
+  ],
   code: `function Counter() {
   const [count, setCount] = useState(0)
 

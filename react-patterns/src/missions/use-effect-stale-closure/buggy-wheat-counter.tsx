@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { harvestEvents } from "../../game/harvest-events";
 import { WHEAT_GOAL } from "./farmer-dialogues";
-import "./wheat-counter.css";
+import "../../game/wheat-counter.css";
 
 export function BuggyWheatCounter() {
   const [count, setCount] = useState(0);

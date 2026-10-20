@@ -4,7 +4,8 @@ import { createGame, type NpcInteraction } from "./create-game";
 type GameCanvasProps = {
   paused: boolean;
   hasHoe: boolean;
-  problemSolved: boolean;
+  missionStage: number;
+  missionCount: number;
   delivered: boolean;
   wheatGoal: number;
   onNpcInteract: (interaction: NpcInteraction) => void;
@@ -14,7 +15,8 @@ type GameCanvasProps = {
 export function GameCanvas({
   paused,
   hasHoe,
-  problemSolved,
+  missionStage,
+  missionCount,
   delivered,
   wheatGoal,
   onNpcInteract,
@@ -23,7 +25,7 @@ export function GameCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(paused);
   const hasHoeRef = useRef(hasHoe);
-  const problemSolvedRef = useRef(problemSolved);
+  const missionStageRef = useRef(missionStage);
   const deliveredRef = useRef(delivered);
   const onNpcInteractRef = useRef(onNpcInteract);
   const onHarvestRef = useRef(onHarvest);
@@ -31,7 +33,7 @@ export function GameCanvas({
   useEffect(() => {
     pausedRef.current = paused;
     hasHoeRef.current = hasHoe;
-    problemSolvedRef.current = problemSolved;
+    missionStageRef.current = missionStage;
     deliveredRef.current = delivered;
     onNpcInteractRef.current = onNpcInteract;
     onHarvestRef.current = onHarvest;
@@ -46,7 +48,8 @@ export function GameCanvas({
       canvas,
       isPaused: () => pausedRef.current,
       hasHoe: () => hasHoeRef.current,
-      isProblemSolved: () => problemSolvedRef.current,
+      getMissionStage: () => missionStageRef.current,
+      missionCount,
       hasDelivered: () => deliveredRef.current,
       wheatGoal,
       onNpcInteract: (interaction) => onNpcInteractRef.current(interaction),
@@ -56,7 +59,7 @@ export function GameCanvas({
       destroyGame();
       canvas.remove();
     };
-  }, [wheatGoal]);
+  }, [wheatGoal, missionCount]);
 
   return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />;
 }

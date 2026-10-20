@@ -19,7 +19,8 @@ const HARVEST_DISTANCE = 60;
 const RIPE_WHEAT_FRAME = 4;
 const HARVESTED_WHEAT_FRAME = 1;
 const CHARACTERS_PATH = "/assets/tiny-questers";
-const HARVESTS_TO_NOTICE_PROBLEM = 2;
+const HARVESTS_TO_NOTICE_PROBLEM_BY_STAGE = [1, 2];
+const INTERACTION_COOLDOWN_SECONDS = 0.25;
 const GROWTH_FRAMES = [1, 2, 3, 4];
 const GROWTH_STEP_SECONDS = 0.7;
 const GROWTH_STAGGER_SECONDS = 0.3;
@@ -34,7 +35,8 @@ type CreateGameParams = {
   canvas: HTMLCanvasElement;
   isPaused: () => boolean;
   hasHoe: () => boolean;
-  isProblemSolved: () => boolean;
+  getMissionStage: () => number;
+  missionCount: number;
   hasDelivered: () => boolean;
   wheatGoal: number;
   onNpcInteract: (interaction: NpcInteraction) => void;
@@ -45,7 +47,8 @@ export function createGame({
   canvas,
   isPaused,
   hasHoe,
-  isProblemSolved,
+  getMissionStage,
+  missionCount,
   hasDelivered,
   wheatGoal,
   onNpcInteract,
@@ -136,8 +139,8 @@ export function createGame({
       k.anchor("center"),
     ]);
     alertBubble.hidden = true;
-    let harvestedBeforeFix = 0;
-    let harvestedAfterFix = 0;
+    let harvestedInStage = 0;
+    let lastPausedTime = -Infinity;
     let farmerLeaving = false;
     let deliveryStarted = false;
     let farmerGone = false;
@@ -145,7 +148,7 @@ export function createGame({
 
     let facing: Direction = "down";
     let hoeEquipped = false;
-    let wasProblemSolved = isProblemSolved();
+    let previousStage = getMissionStage();
 
     function regrowWheat() {
       wheatPatches.forEach((patch, patchIndex) => {
@@ -161,13 +164,15 @@ export function createGame({
       });
     }
 
-    function updateFarmer(problemSolved: boolean) {
+    function updateFarmer(stage: number) {
       if (farmerGone) return;
       if (hasDelivered()) farmerLeaving = true;
+      const allMissionsSolved = stage >= missionCount;
       const noticedProblem =
-        !problemSolved && harvestedBeforeFix >= HARVESTS_TO_NOTICE_PROBLEM;
+        !allMissionsSolved &&
+        harvestedInStage >= HARVESTS_TO_NOTICE_PROBLEM_BY_STAGE[stage];
       const readyToDeliver =
-        problemSolved && harvestedAfterFix >= wheatGoal && !farmerLeaving;
+        allMissionsSolved && harvestedInStage >= wheatGoal && !farmerLeaving;
       alertBubble.hidden = farmerLeaving || !(noticedProblem || readyToDeliver);
       alertBubble.pos.y =
         npc.pos.y +
@@ -196,13 +201,14 @@ export function createGame({
     }
 
     k.onUpdate(() => {
-      const problemSolved = isProblemSolved();
-      if (problemSolved && !wasProblemSolved) {
-        harvestedAfterFix = 0;
+      if (isPaused()) lastPausedTime = k.time();
+      const stage = getMissionStage();
+      if (stage > previousStage) {
+        harvestedInStage = 0;
         regrowWheat();
       }
-      wasProblemSolved = problemSolved;
-      updateFarmer(problemSolved);
+      previousStage = stage;
+      updateFarmer(stage);
       if (hasHoe() && !hoeEquipped) {
         hoeEquipped = true;
         player.use(k.sprite("warrior-farmer"));
@@ -217,10 +223,11 @@ export function createGame({
 
     k.onKeyPress("e", () => {
       if (isPaused()) return;
+      if (k.time() - lastPausedTime < INTERACTION_COOLDOWN_SECONDS) return;
       const canTalkToFarmer = !farmerGone && !farmerLeaving && !deliveryStarted;
       if (canTalkToFarmer && player.pos.dist(npc.pos) <= INTERACTION_DISTANCE) {
         const readyToDeliver =
-          isProblemSolved() && harvestedAfterFix >= wheatGoal;
+          getMissionStage() >= missionCount && harvestedInStage >= wheatGoal;
         deliveryStarted = readyToDeliver;
         onNpcInteract(readyToDeliver ? "delivery" : "mission");
         return;
@@ -232,8 +239,7 @@ export function createGame({
       if (!patch) return;
       patch.ripe = false;
       patch.sprite.frame = HARVESTED_WHEAT_FRAME;
-      if (isProblemSolved()) harvestedAfterFix += 1;
-      else harvestedBeforeFix += 1;
+      harvestedInStage += 1;
       onHarvest();
     });
   });
