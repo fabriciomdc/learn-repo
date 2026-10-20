@@ -18,6 +18,10 @@ Repositório de estudos e prática de front-end. Vai crescendo aos poucos, um t�
 
 - [ ] useEffect (the-one-with-the-stale-closure)
 
+## Créditos
+
+Assets: Sprout Lands, por [Cup Nooble](https://cupnooble.itch.io/sprout-lands-asset-pack). Uso não comercial, licença em `react-patterns/public/assets/sprout-lands/LICENSE.txt`.
+
 ## Como rodar
 
 Cada pasta terá seu próprio jeito de rodar, documentado no README dela quando existir.
