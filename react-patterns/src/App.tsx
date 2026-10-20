@@ -1,7 +1,12 @@
-import { SearchInput } from './topics/use-effect-debounce-search/presentation/search-input'
+import { useCallback } from 'react'
+import { GameCanvas } from './game/game-canvas'
 
 function App() {
-  return <SearchInput />
+  const handleNpcInteract = useCallback(() => {
+    console.log('npc interact')
+  }, [])
+
+  return <GameCanvas onNpcInteract={handleNpcInteract} />
 }
 
 export default App
